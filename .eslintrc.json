@@ -45,6 +45,10 @@
       "error",
       "always"
     ],
+    "comma-dangle": [
+      "error",
+      "always-multiline"
+    ],
     "sort-imports": [
       "error",
       {
