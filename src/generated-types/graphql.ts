@@ -17,6 +17,10 @@ export type Scalars = {
   JSONObject: any;
 };
 
+export type CacheControlScope =
+  | 'PRIVATE'
+  | 'PUBLIC';
+
 export type CatalogClass = {
   __typename?: 'CatalogClass';
   description?: Maybe<Scalars['String']>;
@@ -40,6 +44,7 @@ export type CatalogItem = {
   title: Scalars['String'];
 };
 
+/** Data for a specific class in a specific semester. There may be more than one Class for a given Course in a given semester. */
 export type Class = {
   __typename?: 'Class';
   course: Course;
@@ -62,6 +67,7 @@ export type Class = {
   year: Scalars['Int'];
 };
 
+/** Info shared between Classes within and across semesters. */
 export type Course = {
   __typename?: 'Course';
   classes: Array<Maybe<Class>>;
@@ -83,11 +89,13 @@ export type Course = {
 };
 
 
+/** Info shared between Classes within and across semesters. */
 export type CourseClassesArgs = {
   term?: InputMaybe<Term>;
 };
 
 
+/** Info shared between Classes within and across semesters. */
 export type CourseSectionsArgs = {
   primary?: InputMaybe<Scalars['Boolean']>;
   term?: InputMaybe<Term>;
@@ -128,9 +136,19 @@ export type Instructor = {
 export type Query = {
   __typename?: 'Query';
   User?: Maybe<User>;
+  /**
+   * Get info about all courses and their corresponding classes for a given semester.
+   *
+   * Used primarily in the catalog page.
+   */
   catalog?: Maybe<Array<Maybe<CatalogItem>>>;
   class?: Maybe<Class>;
   course?: Maybe<Course>;
+  /**
+   * Get a list of all course names across all semesters.
+   *
+   * Useful for searching for courses.
+   */
   courseList?: Maybe<Array<Maybe<CourseListItem>>>;
   grade?: Maybe<Grade>;
   ping: Scalars['String'];
@@ -179,6 +197,7 @@ export type QuerySectionArgs = {
   term: Term;
 };
 
+/** Sections are each associated with one Class.  */
 export type Section = {
   __typename?: 'Section';
   ccn: Scalars['Int'];
@@ -304,6 +323,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>;
+  CacheControlScope: CacheControlScope;
   CatalogClass: ResolverTypeWrapper<CatalogClass>;
   CatalogItem: ResolverTypeWrapper<CatalogItem>;
   Class: ResolverTypeWrapper<Class>;
@@ -349,6 +369,14 @@ export type ResolversParentTypes = {
   Term: Term;
   User: User;
 };
+
+export type CacheControlDirectiveArgs = {
+  inheritMaxAge?: Maybe<Scalars['Boolean']>;
+  maxAge?: Maybe<Scalars['Int']>;
+  scope?: Maybe<CacheControlScope>;
+};
+
+export type CacheControlDirectiveResolver<Result, Parent, ContextType = any, Args = CacheControlDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type CatalogClassResolvers<ContextType = any, ParentType extends ResolversParentTypes['CatalogClass'] = ResolversParentTypes['CatalogClass']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -533,6 +561,9 @@ export type Resolvers<ContextType = any> = {
   User?: UserResolvers<ContextType>;
 };
 
+export type DirectiveResolvers<ContextType = any> = {
+  cacheControl?: CacheControlDirectiveResolver<any, any, ContextType>;
+};
 
 export type IsoDate = Scalars["ISODate"];
 export type Json = Scalars["JSON"];

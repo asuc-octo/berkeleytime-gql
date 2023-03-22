@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@apollo/server": "^4.1.0",
+    "@apollo/server-plugin-response-cache": "^4.1.1",
     "@types/mongoose": "^5.7.16",
     "body-parser": "^1.20.1",
     "cors": "^2.8.5",
@@ -55,7 +56,7 @@
     "express": "^4.18.2",
     "graphql": "^16.6.0",
     "graphql-modules": "^2.1.0",
-    "graphql-tools": "^8.0.0",
+    "graphql-tools": "^8.3.19",
     "graphql-type-json": "^0.3.2",
     "helmet": "^3.22.0",
     "lodash": "^4.17.21",
