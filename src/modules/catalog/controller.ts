@@ -1,15 +1,16 @@
-import { CatalogItem, Term } from "../../generated-types/graphql";
+import { CatalogItem, EnrollmentDay, Term } from "../../generated-types/graphql";
 import { ClassModel } from "../../db/class";
 import { getTermStartMonth, termToString } from "../../utils/term";
 import { GradeModel, GradeType } from "../../db/grade";
 import { getAverage } from "../grade/controller";
 import { CourseModel, CourseType } from "../../db/course";
-import { SectionModel } from "../../db/section";
+import { SectionModel, SectionHistoryModel } from "../../db/section";
 import { formatClass, formatCourse, formatSection } from "./formatter";
 import { getCourseKey, getCsCourseId } from "../../utils/course";
-import { isNil } from "lodash";
+import { first, isNil } from "lodash";
 import { GraphQLResolveInfo } from "graphql";
 import { getChildren } from "../../utils/graphql";
+import { ObjectId } from "mongodb";
 
 function matchCsCourseId(id: any) {
     return {
@@ -257,4 +258,110 @@ export function getCourseList(): any {
         .group({ _id: { subject: "$classSubjectArea.code", number: "$catalogNumber.formatted" } })
         .sort({ "_id.subject": 1, "_id.number": 1 })
         .project({ _id: 0, subject: "$_id.subject", number: "$_id.number" })
+}
+
+export async function getEnrollment(ccn: number, term: Term) {
+    const section = await SectionModel.findOne({"id": ccn, "class.session.term.name": termToString(term)}).lean()
+    const sectionObjectId = section?._id.toString()
+
+    // no idea why but the {$exists: true} part just does not work. If $exists works eventually, we should update the code to use it
+    // const diffs = await SectionHistoryModel.find({collectionId: new ObjectId(sectionObjectId), "diff.enrollmentStatus.enrolledCount": {$exists: true}}).lean()
+
+    const diffs = await SectionHistoryModel.find({collectionId: new ObjectId(sectionObjectId)}).lean()
+
+    const enrollmentHistory = new Array<EnrollmentDay>
+
+    // temp var; see comments below
+    var needFirst = true
+    
+    var firstDay = new Date
+
+    var maxEnroll = 0
+    var maxWaitlist = 0
+    
+    // just grabs the maxEnroll and maxWaitlist to match the current frontend functionality
+    // this means maxEnroll or maxWaitlist don't reflect changes over time, instead just serves the all-time max for graphing purposes
+    diffs.map((diff) => {
+        if ("enrollmentStatus" in diff.diff) {
+            if ("maxEnroll" in diff.diff.enrollmentStatus) {
+                maxEnroll = diff.diff.enrollmentStatus.maxEnroll[1]
+            }
+            
+            if ("maxWaitlist" in diff.diff.enrollmentStatus) {
+                maxWaitlist = diff.diff.enrollmentStatus.maxWaitlist[1]
+            }
+            
+            // really REALLY inefficient code for quickly grabbing a "first day of enrollment" to work with
+            // will re-work once we integrate term start days
+            if (("enrolledCount" in diff.diff.enrollmentStatus || "waitlistedCount" in diff.diff.enrollmentStatus) && needFirst) {
+                firstDay = new Date(diff.createdAt)
+                // this can be quite finicky; sometimes you get a proper 0 enrollment / 0 waitlist / 0 time elapsed term
+                // sometimes it skips straight to 1 time elapsed
+                // not sure if it's strictly this part, or
+                firstDay.setDate(firstDay.getDate() - 1)
+                needFirst = false
+            }
+        }
+    })
+    
+    var prevEnrollCount = 0
+    var prevWaitlistCount = 0
+
+    var prevDay = firstDay
+
+    console.log(prevDay)
+
+    // interpolates missing dates to allow frontend graphing to functin properly
+    function fillGaps(currDay: Date, prevDay: Date, prevEnrollCount: number, prevWaitlistCount: number) {
+        let dayGap = daysElapsed(currDay, prevDay)
+
+        console.log("dg", dayGap)
+        let startingDE = daysElapsed(prevDay, firstDay)
+        console.log("sde", startingDE)
+        for (let i = 1; i < dayGap; i++) {
+
+            // current frontend implementation would just push mostly nulls here, but I elected to extrapolate from previous data
+            enrollmentHistory.push({
+                daysElapsed: startingDE + i,
+                enrollCount: prevEnrollCount, 
+                enrollMax: maxEnroll, 
+                waitlistCount: prevWaitlistCount,
+                waitlistMax: maxWaitlist
+            })
+        }
+
+    }
+
+    // helper function to get the number of days that separate currDay and prevDay
+    function daysElapsed(currDay: Date, prevDay: Date): number {
+        return Math.round((currDay.getTime() - prevDay.getTime()) / (1000 * 60 * 60 * 24))
+    }
+
+    diffs.map((diff) => {
+        if ("enrollmentStatus" in diff.diff) {
+            
+            if ("enrolledCount" in diff.diff.enrollmentStatus) {
+                fillGaps(new Date(diff.createdAt), prevDay, prevEnrollCount, prevWaitlistCount)
+
+                prevEnrollCount = diff.diff.enrollmentStatus.enrolledCount[1]
+                prevDay = new Date(diff.createdAt)
+            }
+            if ("waitlistedCount" in diff.diff.enrollmentStatus) {
+                fillGaps(new Date(diff.createdAt), prevDay, prevEnrollCount, prevWaitlistCount)
+
+                prevWaitlistCount = diff.diff.enrollmentStatus.waitlistedCount[1]
+                prevDay = new Date(diff.createdAt)
+            }
+
+            enrollmentHistory.push({
+                daysElapsed: daysElapsed(prevDay, firstDay), 
+                enrollCount: prevEnrollCount, 
+                enrollMax: maxEnroll, 
+                waitlistCount: prevWaitlistCount,
+                waitlistMax: maxWaitlist
+            })
+        }
+    })
+    
+    return enrollmentHistory
 }

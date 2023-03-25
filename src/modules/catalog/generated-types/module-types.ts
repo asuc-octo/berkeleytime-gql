@@ -7,7 +7,7 @@ export namespace CatalogModule {
     Class: 'course' | 'primarySection' | 'sections' | 'description' | 'enrollCount' | 'enrollMax' | 'number' | 'semester' | 'session' | 'status' | 'title' | 'unitsMax' | 'unitsMin' | 'waitlistCount' | 'waitlistMax' | 'year' | 'raw' | 'lastUpdated';
     Section: 'class' | 'course' | 'enrollmentHistory' | 'ccn' | 'dateEnd' | 'dateStart' | 'days' | 'enrollCount' | 'enrollMax' | 'instructors' | 'kind' | 'location' | 'notes' | 'number' | 'primary' | 'timeEnd' | 'timeStart' | 'waitlistCount' | 'waitlistMax' | 'raw' | 'lastUpdated';
     Instructor: 'familyName' | 'givenName';
-    EnrollmentDay: 'enrollCount' | 'enrollMax' | 'waitlistCount' | 'waitlistMax';
+    EnrollmentDay: 'daysElapsed' | 'enrollCount' | 'enrollMax' | 'waitlistCount' | 'waitlistMax';
     CatalogItem: 'subject' | 'number' | 'title' | 'description' | 'classes' | 'gradeAverage' | 'lastUpdated';
     CatalogClass: 'number' | 'title' | 'description' | 'enrollCount' | 'enrollMax' | 'unitsMax' | 'unitsMin' | 'lastUpdated';
     CourseListItem: 'subject' | 'number';
@@ -132,6 +132,7 @@ export namespace CatalogModule {
     };
     EnrollmentDay?: {
       '*'?: gm.Middleware[];
+      daysElapsed?: gm.Middleware[];
       enrollCount?: gm.Middleware[];
       enrollMax?: gm.Middleware[];
       waitlistCount?: gm.Middleware[];

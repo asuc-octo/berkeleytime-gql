@@ -101,6 +101,7 @@ export type CourseListItem = {
 
 export type EnrollmentDay = {
   __typename?: 'EnrollmentDay';
+  daysElapsed: Scalars['Int'];
   enrollCount: Scalars['Int'];
   enrollMax: Scalars['Int'];
   waitlistCount: Scalars['Int'];
@@ -422,6 +423,7 @@ export type CourseListItemResolvers<ContextType = any, ParentType extends Resolv
 };
 
 export type EnrollmentDayResolvers<ContextType = any, ParentType extends ResolversParentTypes['EnrollmentDay'] = ResolversParentTypes['EnrollmentDay']> = {
+  daysElapsed?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   enrollCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   enrollMax?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   waitlistCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
