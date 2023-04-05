@@ -308,10 +308,10 @@ export async function getEnrollment(ccn: number, term: Term) {
         }
     })
     
-    var prevEnrollCount = 0
-    var prevWaitlistCount = 0
+    let prevEnrollCount = 0
+    let prevWaitlistCount = 0
 
-    var prevDay = firstDay
+    let prevDay = firstDay
 
     console.log(prevDay)
 
