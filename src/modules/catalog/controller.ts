@@ -7,7 +7,7 @@ import { CourseModel, CourseType } from "../../db/course";
 import { SectionModel, SectionHistoryModel } from "../../db/section";
 import { formatClass, formatCourse, formatSection } from "./formatter";
 import { getCourseKey, getCsCourseId } from "../../utils/course";
-import { first, isNil } from "lodash";
+import { isNil } from "lodash";
 import { GraphQLResolveInfo } from "graphql";
 import { getChildren } from "../../utils/graphql";
 import { ObjectId } from "mongodb";
@@ -276,12 +276,12 @@ export async function getEnrollment(ccn: number, term: Term) {
     const enrollmentHistory = new Array<EnrollmentDay>
 
     // temp var; see comments below
-    var needFirst = true
+    let needFirst = true
     
-    var firstDay = new Date
+    let firstDay = new Date
 
-    var maxEnroll = 0
-    var maxWaitlist = 0
+    let maxEnroll = 0
+    let maxWaitlist = 0
     
     // just grabs the maxEnroll and maxWaitlist to match the current frontend functionality
     // this means maxEnroll or maxWaitlist don't reflect changes over time, instead just serves the all-time max for graphing purposes
@@ -317,10 +317,10 @@ export async function getEnrollment(ccn: number, term: Term) {
 
     // interpolates missing dates to allow frontend graphing to functin properly
     function fillGaps(currDay: Date, prevDay: Date, prevEnrollCount: number, prevWaitlistCount: number) {
-        let dayGap = daysElapsed(currDay, prevDay)
+        const dayGap = daysElapsed(currDay, prevDay)
 
         console.log("dg", dayGap)
-        let startingDE = daysElapsed(prevDay, firstDay)
+        const startingDE = daysElapsed(prevDay, firstDay)
         console.log("sde", startingDE)
         for (let i = 1; i < dayGap; i++) {
 
